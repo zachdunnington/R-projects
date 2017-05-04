@@ -1,0 +1,38 @@
+install.packages("WriteXLS")
+library(WriteXLS)
+
+comb2016 <- salaries %>% semi_join(field2016, by = "PLAYER")
+head(comb2016)
+comb2016 <- comb2016 %>% semi_join(bat2016, by = "PLAYER")
+
+batComb2016 <- bat2016 %>% semi_join(comb2016, by = "PLAYER")
+head(batComb2016)
+
+fieldComb2016 <- field2016 %>% semi_join(comb2016, by = "PLAYER")
+head(fieldComb2016)
+nrow(comb2016)
+nrow(batComb2016)
+nrow(fieldComb2016)
+
+fieldComb2016 <- fieldComb2016 %>% distinct(PLAYER, .keep_all = TRUE)
+nrow(fieldComb2016)
+
+stats2016 <- merge(comb2016, batComb2016, by = "PLAYER")
+stats2016 <- merge(stats2016, fieldComb2016, by = "PLAYER")
+glimpse(stats2016)
+stats2016 <- subset(stats2016, select = -c(RK.x, RK.y, TEAM.y, TEAM.x))
+stats2016$Team <- as.factor(stats2016$Team)
+stats2016$POS <- as.factor(stats2016$POS)
+stats2016$AB <- as.double(stats2016$'AB')
+
+stats2016$`Avg Annual` <- gsub('$', '', stats2016$`Avg Annual`, fixed = TRUE)
+trim.leading <- function (x)  sub("^\\s+", "", x)
+stats2016$`Avg Annual` <- trim.leading(stats2016$`Avg Annual`)
+stats2016$`Avg Annual`<- as.double(as.character(stats2016$`Avg Annual`))
+
+convert <- c(7:34)
+stats2016[,convert] <- lapply(stats2016[,convert], double)
+bb <- as.double(as.character(stats2016$BB))
+
+
+WriteXLS(stats2016, "stats2016.xls")

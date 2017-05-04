@@ -1,0 +1,32 @@
+library(leaflet)
+library(ggmap)
+
+
+#map san francisco
+#map san francisco
+san_francisco <- ggmap::geocode("San Francisco")
+leaflet(san_francisco) %>% addTiles() %>% addMarkers()
+
+leaflet(san_francisco) %>%
+  addTiles(group = "OSM (default)") %>%
+  addProviderTiles("OpenStreetMap.DE", group = "OSM.DE") %>%
+  addProviderTiles("Stamen.TonerLite", group = "Toner Lite") %>%
+    #Bike station points plotted
+  addMarkers(data = bikesharestation2015, popup = bikesharestation2015$name, lng = ~long, lat = ~lat, 
+               icon = bikeIcon, group = "Bike Stations") %>%
+  addMarkers(data = SF_ZIPCODES, popup = SF_ZIPCODES$Number.of.Rides, lng = ~Long, lat = ~Lat,
+               group = "Zipcode") %>%
+  
+  #zipcodes plotted as circles with weight related to density of rides from customers in that zipcode
+  addCircles(data = SF_ZIPCODES, lng = ~Long, lat = ~Lat, weight = 1,
+             radius = ~sqrt(Number.of.Rides) * 7, group = "Zipcode Ride Density") %>%
+  
+  addCircles(data = SF_ZIPCODES, lng = ~Long, lat = ~Lat, weight = 1,
+             radius = ~sqrt(POP) * 7, color = "red", group = "Zipcode Pop Density") %>%
+  
+  #This controls the layers
+  addLayersControl(
+    baseGroups = c("OSM (default)", "OSM.DE", "Toner Lite"),
+    overlayGroups = c("Bike Stations", "Zipcode Ride Density", "Zipcode", "Zipcode Pop Density"),
+    options = layersControlOptions(collapsed = FALSE)
+  )
